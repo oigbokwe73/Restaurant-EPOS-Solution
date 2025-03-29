@@ -1,3 +1,5 @@
+The client wanted to group multiple restaurants onto a single social marketplace. To achieve this, they wanted to pull restaurant-specific information from various social networking sites like Instagram, Foursquare and Twitter. They had targeted to fetch & store the metadata of more than 27,000 restaurants. This huge data had to be analyzed for which the client required an analytics system. In addition, the data of these restaurants had to be updated in the system on a daily basis An important challenge was to understand the APIs of Instagram, Foursquare, Twitter in order to read the restaurant’s metadata. The client's requirement was to rapidly process data from the thousands of restaurants on a daily basis. Moreover to handle this huge data, client wanted to implement Big Data analytics.
+
 This is a great use case involving social media data aggregation, big data processing, and analytics for a **restaurant-centric social marketplace**. Let's break this down into the **overall scenario**, then define the **Azure architecture** and finally the **SQL tables** required for storing and analyzing the data.
 
 ---
