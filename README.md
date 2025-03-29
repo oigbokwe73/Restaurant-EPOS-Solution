@@ -19,8 +19,8 @@ The client wants to:
 ```mermaid
 graph TD
     A[Social Media API Poller - Azure Function] --> B[Azure Service Bus Topic]
-    B --> C[Azure Function (Consumer - Ingestor)]
-    C --> D[Azure Storage (Blob)]
+    B --> C[Azure Function Consumer - Ingestor]
+    C --> D[Azure Storage Blob]
     C --> E[Azure SQL Database]
     E --> F[Power BI for Reporting]
     D --> G[Azure Synapse or Databricks for Big Data Analytics]
