@@ -1,3 +1,5 @@
+The client wanted to group multiple restaurants onto a single social marketplace. To achieve this, they wanted to pull restaurant-specific information from various social networking sites like Instagram, Foursquare and Twitter. They had targeted to fetch & store the metadata of more than 27,000 restaurants. This huge data had to be analyzed for which the client required an analytics system. In addition, the data of these restaurants had to be updated in the system on a daily basis An important challenge was to understand the APIs of Instagram, Foursquare, Twitter in order to read the restaurant’s metadata. The client's requirement was to rapidly process data from the thousands of restaurants on a daily basis. Moreover to handle this huge data, client wanted to implement Big Data analytics.
+
 This is a great use case involving social media data aggregation, big data processing, and analytics for a **restaurant-centric social marketplace**. Let's break this down into the **overall scenario**, then define the **Azure architecture** and finally the **SQL tables** required for storing and analyzing the data.
 
 ---
@@ -127,8 +129,309 @@ CREATE TABLE DailyFetchLog (
     RetryCount INT DEFAULT 0
 );
 ```
+Below are the **stored procedures** for `CREATE`, `READ`, `UPDATE`, and `DELETE` operations (CRUD) for each of the **main SQL tables** discussed earlier in the restaurant social marketplace scenario.
+
+Let’s focus on the following tables:
+
+1. `Restaurants`  
+2. `RestaurantSocialProfiles`  
+3. `SocialMediaMetadata`  
 
 ---
+
+## 🛠️ 1. `Restaurants` Table – Stored Procedures
+
+### ✅ Create
+
+```sql
+CREATE PROCEDURE sp_CreateRestaurant
+    @Name NVARCHAR(255),
+    @Address NVARCHAR(500),
+    @City NVARCHAR(100),
+    @State NVARCHAR(100),
+    @Country NVARCHAR(100),
+    @ZipCode NVARCHAR(20),
+    @Latitude FLOAT,
+    @Longitude FLOAT
+AS
+BEGIN
+    INSERT INTO Restaurants (Name, Address, City, State, Country, ZipCode, Latitude, Longitude)
+    VALUES (@Name, @Address, @City, @State, @Country, @ZipCode, @Latitude, @Longitude)
+END
+```
+
+### 📖 Read
+
+```sql
+CREATE PROCEDURE sp_GetRestaurantById
+    @RestaurantID INT
+AS
+BEGIN
+    SELECT * FROM Restaurants WHERE RestaurantID = @RestaurantID
+END
+```
+
+### ✏️ Update
+
+```sql
+CREATE PROCEDURE sp_UpdateRestaurant
+    @RestaurantID INT,
+    @Name NVARCHAR(255),
+    @Address NVARCHAR(500),
+    @City NVARCHAR(100),
+    @State NVARCHAR(100),
+    @Country NVARCHAR(100),
+    @ZipCode NVARCHAR(20),
+    @Latitude FLOAT,
+    @Longitude FLOAT
+AS
+BEGIN
+    UPDATE Restaurants
+    SET Name = @Name,
+        Address = @Address,
+        City = @City,
+        State = @State,
+        Country = @Country,
+        ZipCode = @ZipCode,
+        Latitude = @Latitude,
+        Longitude = @Longitude
+    WHERE RestaurantID = @RestaurantID
+END
+```
+
+### ❌ Delete
+
+```sql
+CREATE PROCEDURE sp_DeleteRestaurant
+    @RestaurantID INT
+AS
+BEGIN
+    DELETE FROM Restaurants WHERE RestaurantID = @RestaurantID
+END
+```
+
+---
+
+## 🛠️ 2. `RestaurantSocialProfiles` Table – Stored Procedures
+
+### ✅ Create
+
+```sql
+CREATE PROCEDURE sp_CreateRestaurantSocialProfile
+    @RestaurantID INT,
+    @SourceID INT,
+    @SocialHandle NVARCHAR(100),
+    @IsActive BIT
+AS
+BEGIN
+    INSERT INTO RestaurantSocialProfiles (RestaurantID, SourceID, SocialHandle, LastChecked, IsActive)
+    VALUES (@RestaurantID, @SourceID, @SocialHandle, GETDATE(), @IsActive)
+END
+```
+
+### 📖 Read
+
+```sql
+CREATE PROCEDURE sp_GetRestaurantProfiles
+    @RestaurantID INT
+AS
+BEGIN
+    SELECT * FROM RestaurantSocialProfiles WHERE RestaurantID = @RestaurantID
+END
+```
+
+### ✏️ Update
+
+```sql
+CREATE PROCEDURE sp_UpdateRestaurantSocialProfile
+    @ProfileID INT,
+    @SocialHandle NVARCHAR(100),
+    @IsActive BIT
+AS
+BEGIN
+    UPDATE RestaurantSocialProfiles
+    SET SocialHandle = @SocialHandle,
+        LastChecked = GETDATE(),
+        IsActive = @IsActive
+    WHERE ProfileID = @ProfileID
+END
+```
+
+### ❌ Delete
+
+```sql
+CREATE PROCEDURE sp_DeleteRestaurantSocialProfile
+    @ProfileID INT
+AS
+BEGIN
+    DELETE FROM RestaurantSocialProfiles WHERE ProfileID = @ProfileID
+END
+```
+
+---
+
+## 🛠️ 3. `SocialMediaMetadata` Table – Stored Procedures
+
+### ✅ Create
+
+```sql
+CREATE PROCEDURE sp_CreateSocialMediaMetadata
+    @ProfileID INT,
+    @PostID NVARCHAR(100),
+    @PostURL NVARCHAR(500),
+    @Caption NVARCHAR(MAX),
+    @Likes INT,
+    @Comments INT,
+    @CreatedTime DATETIME,
+    @RawData NVARCHAR(MAX)
+AS
+BEGIN
+    INSERT INTO SocialMediaMetadata (
+        ProfileID, PostID, PostURL, Caption, Likes, Comments, CreatedTime, RawData, IngestedAt
+    )
+    VALUES (
+        @ProfileID, @PostID, @PostURL, @Caption, @Likes, @Comments, @CreatedTime, @RawData, GETDATE()
+    )
+END
+```
+
+### 📖 Read
+
+```sql
+CREATE PROCEDURE sp_GetMetadataByProfile
+    @ProfileID INT
+AS
+BEGIN
+    SELECT * FROM SocialMediaMetadata WHERE ProfileID = @ProfileID
+END
+```
+
+### ✏️ Update
+
+```sql
+CREATE PROCEDURE sp_UpdateSocialMediaMetadata
+    @MetadataID INT,
+    @Caption NVARCHAR(MAX),
+    @Likes INT,
+    @Comments INT,
+    @RawData NVARCHAR(MAX)
+AS
+BEGIN
+    UPDATE SocialMediaMetadata
+    SET Caption = @Caption,
+        Likes = @Likes,
+        Comments = @Comments,
+        RawData = @RawData
+    WHERE MetadataID = @MetadataID
+END
+```
+
+### ❌ Delete
+
+```sql
+CREATE PROCEDURE sp_DeleteSocialMediaMetadata
+    @MetadataID INT
+AS
+BEGIN
+    DELETE FROM SocialMediaMetadata WHERE MetadataID = @MetadataID
+END
+```
+
+---
+
+Set Up Steps 
+
+Creating a serverless API using Azure that leverages Service Bus to communicate with an SQL Database involves several steps. Here's a high-level overview of how you can set this up:
+
+1. **Set Up Azure SQL Database**:
+   - Create an Azure SQL Database instance.
+   - Set up the necessary tables and schemas you'll need for your application.
+
+2. **Create Azure Service Bus**:
+   - Set up an Azure Service Bus namespace.
+   - Within the namespace, create a queue or topic (based on your requirement).
+
+3. **Deploy Serverless API using Azure Functions**:
+   - Create a new Azure Function App.
+   - Develop an HTTP-triggered function that will act as your API endpoint.
+   - In this function, when data is received, send a message to the Service Bus queue or topic.
+
+4. **Deploy 2 Service Bus Triggered Function**:
+   - Create another Azure Function that is triggered by the Service Bus queue or topic.
+   - This function will read the message from the Service Bus and process it. The processing might involve parsing the message and inserting the data into the Azure SQL Database.
+
+5. **Deploy a Timer Triggered Function**:
+   - Create another Azure Function that is triggered when a file is dropped in a container.
+   - This function will stream in a file, read it and place on the service bus topic.
+
+6. **Implement Error Handling**:
+   - Ensure that you have error handling in place. If there's a failure in processing the message and inserting it into the database, you might want to log the error or move the message to a dead-letter queue.
+
+7. **Secure Your Functions**:
+   - Ensure that your HTTP-triggered function (API endpoint) is secured, possibly using Azure Active Directory or function keys.
+
+8. **Optimize & Monitor**:
+   - Monitor the performance of your functions using Azure Monitor and Application Insights.
+   - Optimize the performance, scalability, and cost by adjusting the function's plan (Consumption Plan, Premium Plan, etc.) and tweaking the configurations.
+
+9. **Deployment**:
+   - Deploy your functions to the Azure environment. You can use CI/CD pipelines using tools like Azure DevOps or GitHub Actions for automated deployments.
+
+By following these steps, you'll have a serverless API in Azure that uses Service Bus as a mediator to process data and store it in an SQL Database. This architecture ensures decoupling between data ingestion and processing, adding a layer of resilience and scalability to your solution.
+
+
+## Appplication Setting 
+
+|Key|Value | Comment|
+|:----|:----|:----|
+|AzureWebJobsStorage|[CONNECTION STRING]|RECOMMENDATION :  store in AzureKey Vault.|
+|ConfigurationPath| [CONFIGURATION FOLDER PATH] |Folder is optional
+|ApiKeyName|[API KEY NAME]|Will be passed in the header  :  the file name of the config.
+|AppName| [APPLICATION NAME]| This is the name of the Function App, used in log analytics|
+|StorageAcctName|[STORAGE ACCOUNT NAME]|Example  "AzureWebJobsStorage"|
+|ServiceBusConnectionString|[SERVICE BUS CONNECTION STRING]|Example  "ServiceBusConnectionString".  Recommmended to store in Key vault.|
+|DatabaseConnection|[DATABASE CONNECTION STRING]|Example  "DatabaseConnection". Recommmended to store in Key vault.|
+|TimerInterval|[TIMER_INTERVAL]|Example  "0 */1 * * * *" 1 MIN|
+
+
+> **Note:**  Look at the configuration file in the **Config** Folder and created a Table to record information.
+
+## Configuration Files 
+
+> **Note:** The **Configuration** is located in the  FunctionApp  in a **Config** Folder.
+
+|FileName|Description|
+|:----|:----|
+|4DED97998C8B47F58D816E3CC85337C3.json| create a new entry for resturant information |
+|3181DEB05BCF4E61A4E1F1349F9BB94C.json| Read Resturant Information |
+|578E321AD4E74218B0785173D65B175B.json| Update Resturant Information |
+|0E421EC1484340B2A2AAF739E896B303.json| Delete Resturant Information|
+|D0A2CC48DF9B47ACB555E73EEF56B81A.json| Create Resturant Profile Information|
+|89CDC82F12DA4EF09ACA9035CE64D07C.json| Read Resturant Profile Information |
+|7E6A81DBF0DB44349E9C391360579B66.json| Update Resturant Profile Information |
+|1107A7F7E64C4F598FCFDFCDC178B53A.json| Delete Resturant Profile Information |
+|2379ACD6ABFF4FD1BADFA22F67990A6C.json| Create Social Media Resturant Information |
+|3D1ED32ADFB4445A93728E8FAB9FA78E.json| Read Social Media Resturant Information |
+|56698E83A81F4013AE9975B30AE46C33.json| Update Social Media Resturant Information  |
+|63E860501EDB49A6B43974890BCFDB67.json| Delete Social Media Resturant Information  |
+
+
+> Create the following blob containers and share in azure storage
+
+|ContainerName|Description|
+|:----|:----|
+|config|Location for the configuration files|
+
+
+
+## Service Bus Subscription information
+
+|Subscription Name|Description|
+|:----|:----|
+|request|Create a Topic|
+|nosqlmessage|Create a Subscription|
+|sqlmessage|Create a Subscription|
+
 
 ## 📥 **Azure Storage Blob Structure (Raw Metadata)**
 
