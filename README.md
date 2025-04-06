@@ -339,6 +339,100 @@ END
 
 ---
 
+Set Up Steps 
+
+Creating a serverless API using Azure that leverages Service Bus to communicate with an SQL Database involves several steps. Here's a high-level overview of how you can set this up:
+
+1. **Set Up Azure SQL Database**:
+   - Create an Azure SQL Database instance.
+   - Set up the necessary tables and schemas you'll need for your application.
+
+2. **Create Azure Service Bus**:
+   - Set up an Azure Service Bus namespace.
+   - Within the namespace, create a queue or topic (based on your requirement).
+
+3. **Deploy Serverless API using Azure Functions**:
+   - Create a new Azure Function App.
+   - Develop an HTTP-triggered function that will act as your API endpoint.
+   - In this function, when data is received, send a message to the Service Bus queue or topic.
+
+4. **Deploy 2 Service Bus Triggered Function**:
+   - Create another Azure Function that is triggered by the Service Bus queue or topic.
+   - This function will read the message from the Service Bus and process it. The processing might involve parsing the message and inserting the data into the Azure SQL Database.
+
+5. **Deploy a Timer Triggered Function**:
+   - Create another Azure Function that is triggered when a file is dropped in a container.
+   - This function will stream in a file, read it and place on the service bus topic.
+
+6. **Implement Error Handling**:
+   - Ensure that you have error handling in place. If there's a failure in processing the message and inserting it into the database, you might want to log the error or move the message to a dead-letter queue.
+
+7. **Secure Your Functions**:
+   - Ensure that your HTTP-triggered function (API endpoint) is secured, possibly using Azure Active Directory or function keys.
+
+8. **Optimize & Monitor**:
+   - Monitor the performance of your functions using Azure Monitor and Application Insights.
+   - Optimize the performance, scalability, and cost by adjusting the function's plan (Consumption Plan, Premium Plan, etc.) and tweaking the configurations.
+
+9. **Deployment**:
+   - Deploy your functions to the Azure environment. You can use CI/CD pipelines using tools like Azure DevOps or GitHub Actions for automated deployments.
+
+By following these steps, you'll have a serverless API in Azure that uses Service Bus as a mediator to process data and store it in an SQL Database. This architecture ensures decoupling between data ingestion and processing, adding a layer of resilience and scalability to your solution.
+
+
+## Appplication Setting 
+
+|Key|Value | Comment|
+|:----|:----|:----|
+|AzureWebJobsStorage|[CONNECTION STRING]|RECOMMENDATION :  store in AzureKey Vault.|
+|ConfigurationPath| [CONFIGURATION FOLDER PATH] |Folder is optional
+|ApiKeyName|[API KEY NAME]|Will be passed in the header  :  the file name of the config.
+|AppName| [APPLICATION NAME]| This is the name of the Function App, used in log analytics|
+|StorageAcctName|[STORAGE ACCOUNT NAME]|Example  "AzureWebJobsStorage"|
+|ServiceBusConnectionString|[SERVICE BUS CONNECTION STRING]|Example  "ServiceBusConnectionString".  Recommmended to store in Key vault.|
+|DatabaseConnection|[DATABASE CONNECTION STRING]|Example  "DatabaseConnection". Recommmended to store in Key vault.|
+|TimerInterval|[TIMER_INTERVAL]|Example  "0 */1 * * * *" 1 MIN|
+
+
+> **Note:**  Look at the configuration file in the **Config** Folder and created a Table to record information.
+
+## Configuration Files 
+
+> **Note:** The **Configuration** is located in the  FunctionApp  in a **Config** Folder.
+
+|FileName|Description|
+|:----|:----|
+|4DED97998C8B47F58D816E3CC85337C3.json| create a new entry for resturant information |
+|3181DEB05BCF4E61A4E1F1349F9BB94C.json| Read Resturant Information |
+|578E321AD4E74218B0785173D65B175B.json| Update Resturant Information |
+|0E421EC1484340B2A2AAF739E896B303.json| Delete Resturant Information|
+|D0A2CC48DF9B47ACB555E73EEF56B81A.json| Create Resturant Profile Information|
+|89CDC82F12DA4EF09ACA9035CE64D07C.json| Read Resturant Profile Information |
+|7E6A81DBF0DB44349E9C391360579B66.json| Update Resturant Profile Information |
+|1107A7F7E64C4F598FCFDFCDC178B53A.json| Delete Resturant Profile Information |
+|2379ACD6ABFF4FD1BADFA22F67990A6C.json| Create Social Media Resturant Information |
+|3D1ED32ADFB4445A93728E8FAB9FA78E.json| Read Social Media Resturant Information |
+|56698E83A81F4013AE9975B30AE46C33.json| Update Social Media Resturant Information  |
+|63E860501EDB49A6B43974890BCFDB67.json| Delete Social Media Resturant Information  |
+
+
+> Create the following blob containers and share in azure storage
+
+|ContainerName|Description|
+|:----|:----|
+|config|Location for the configuration files|
+
+
+
+## Service Bus Subscription information
+
+|Subscription Name|Description|
+|:----|:----|
+|request|Create a Topic|
+|nosqlmessage|Create a Subscription|
+|sqlmessage|Create a Subscription|
+
+
 ## 📥 **Azure Storage Blob Structure (Raw Metadata)**
 
 Each poll from the APIs can drop raw metadata in blob storage for archival and big data processing.
