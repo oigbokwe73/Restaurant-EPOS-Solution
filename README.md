@@ -129,6 +129,213 @@ CREATE TABLE DailyFetchLog (
     RetryCount INT DEFAULT 0
 );
 ```
+Below are the **stored procedures** for `CREATE`, `READ`, `UPDATE`, and `DELETE` operations (CRUD) for each of the **main SQL tables** discussed earlier in the restaurant social marketplace scenario.
+
+Let’s focus on the following tables:
+
+1. `Restaurants`  
+2. `RestaurantSocialProfiles`  
+3. `SocialMediaMetadata`  
+
+---
+
+## 🛠️ 1. `Restaurants` Table – Stored Procedures
+
+### ✅ Create
+
+```sql
+CREATE PROCEDURE sp_CreateRestaurant
+    @Name NVARCHAR(255),
+    @Address NVARCHAR(500),
+    @City NVARCHAR(100),
+    @State NVARCHAR(100),
+    @Country NVARCHAR(100),
+    @ZipCode NVARCHAR(20),
+    @Latitude FLOAT,
+    @Longitude FLOAT
+AS
+BEGIN
+    INSERT INTO Restaurants (Name, Address, City, State, Country, ZipCode, Latitude, Longitude)
+    VALUES (@Name, @Address, @City, @State, @Country, @ZipCode, @Latitude, @Longitude)
+END
+```
+
+### 📖 Read
+
+```sql
+CREATE PROCEDURE sp_GetRestaurantById
+    @RestaurantID INT
+AS
+BEGIN
+    SELECT * FROM Restaurants WHERE RestaurantID = @RestaurantID
+END
+```
+
+### ✏️ Update
+
+```sql
+CREATE PROCEDURE sp_UpdateRestaurant
+    @RestaurantID INT,
+    @Name NVARCHAR(255),
+    @Address NVARCHAR(500),
+    @City NVARCHAR(100),
+    @State NVARCHAR(100),
+    @Country NVARCHAR(100),
+    @ZipCode NVARCHAR(20),
+    @Latitude FLOAT,
+    @Longitude FLOAT
+AS
+BEGIN
+    UPDATE Restaurants
+    SET Name = @Name,
+        Address = @Address,
+        City = @City,
+        State = @State,
+        Country = @Country,
+        ZipCode = @ZipCode,
+        Latitude = @Latitude,
+        Longitude = @Longitude
+    WHERE RestaurantID = @RestaurantID
+END
+```
+
+### ❌ Delete
+
+```sql
+CREATE PROCEDURE sp_DeleteRestaurant
+    @RestaurantID INT
+AS
+BEGIN
+    DELETE FROM Restaurants WHERE RestaurantID = @RestaurantID
+END
+```
+
+---
+
+## 🛠️ 2. `RestaurantSocialProfiles` Table – Stored Procedures
+
+### ✅ Create
+
+```sql
+CREATE PROCEDURE sp_CreateRestaurantSocialProfile
+    @RestaurantID INT,
+    @SourceID INT,
+    @SocialHandle NVARCHAR(100),
+    @IsActive BIT
+AS
+BEGIN
+    INSERT INTO RestaurantSocialProfiles (RestaurantID, SourceID, SocialHandle, LastChecked, IsActive)
+    VALUES (@RestaurantID, @SourceID, @SocialHandle, GETDATE(), @IsActive)
+END
+```
+
+### 📖 Read
+
+```sql
+CREATE PROCEDURE sp_GetRestaurantProfiles
+    @RestaurantID INT
+AS
+BEGIN
+    SELECT * FROM RestaurantSocialProfiles WHERE RestaurantID = @RestaurantID
+END
+```
+
+### ✏️ Update
+
+```sql
+CREATE PROCEDURE sp_UpdateRestaurantSocialProfile
+    @ProfileID INT,
+    @SocialHandle NVARCHAR(100),
+    @IsActive BIT
+AS
+BEGIN
+    UPDATE RestaurantSocialProfiles
+    SET SocialHandle = @SocialHandle,
+        LastChecked = GETDATE(),
+        IsActive = @IsActive
+    WHERE ProfileID = @ProfileID
+END
+```
+
+### ❌ Delete
+
+```sql
+CREATE PROCEDURE sp_DeleteRestaurantSocialProfile
+    @ProfileID INT
+AS
+BEGIN
+    DELETE FROM RestaurantSocialProfiles WHERE ProfileID = @ProfileID
+END
+```
+
+---
+
+## 🛠️ 3. `SocialMediaMetadata` Table – Stored Procedures
+
+### ✅ Create
+
+```sql
+CREATE PROCEDURE sp_CreateSocialMediaMetadata
+    @ProfileID INT,
+    @PostID NVARCHAR(100),
+    @PostURL NVARCHAR(500),
+    @Caption NVARCHAR(MAX),
+    @Likes INT,
+    @Comments INT,
+    @CreatedTime DATETIME,
+    @RawData NVARCHAR(MAX)
+AS
+BEGIN
+    INSERT INTO SocialMediaMetadata (
+        ProfileID, PostID, PostURL, Caption, Likes, Comments, CreatedTime, RawData, IngestedAt
+    )
+    VALUES (
+        @ProfileID, @PostID, @PostURL, @Caption, @Likes, @Comments, @CreatedTime, @RawData, GETDATE()
+    )
+END
+```
+
+### 📖 Read
+
+```sql
+CREATE PROCEDURE sp_GetMetadataByProfile
+    @ProfileID INT
+AS
+BEGIN
+    SELECT * FROM SocialMediaMetadata WHERE ProfileID = @ProfileID
+END
+```
+
+### ✏️ Update
+
+```sql
+CREATE PROCEDURE sp_UpdateSocialMediaMetadata
+    @MetadataID INT,
+    @Caption NVARCHAR(MAX),
+    @Likes INT,
+    @Comments INT,
+    @RawData NVARCHAR(MAX)
+AS
+BEGIN
+    UPDATE SocialMediaMetadata
+    SET Caption = @Caption,
+        Likes = @Likes,
+        Comments = @Comments,
+        RawData = @RawData
+    WHERE MetadataID = @MetadataID
+END
+```
+
+### ❌ Delete
+
+```sql
+CREATE PROCEDURE sp_DeleteSocialMediaMetadata
+    @MetadataID INT
+AS
+BEGIN
+    DELETE FROM SocialMediaMetadata WHERE MetadataID = @MetadataID
+END
+```
 
 ---
 
